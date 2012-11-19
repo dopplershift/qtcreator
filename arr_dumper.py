@@ -6,7 +6,21 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+def catch_errors(name="Error"):
+    def dec(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except:
+                import sys
+                printException(name, *sys.exc_info())
+                return
+        return wrapper
+    return dec
+
+
 creator_c_style_dumper = qdump____c_style_array__
+@catch_errors("array")
 def qdump____c_style_array__(d, value):
     typ = value.type.unqualified()
 
