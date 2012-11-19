@@ -11,11 +11,12 @@ def qdump____c_style_array__(d, value):
         d.putType(str(value.type.unqualified()))
         d.putValue('')
         d.putNumChild(2)
-        with Children(d):
-            with SubItem(d, "Data"):
-                creator_c_style_dumper(d, value)
-            with SubItem(d, "Image"):
-                defaultPlotter.putInfo(d, value)
+        if d.isExpanded():
+            with Children(d):
+                with SubItem(d, "Data"):
+                    creator_c_style_dumper(d, value)
+                with SubItem(d, "Image"):
+                    defaultPlotter.putInfo(d, value)
 
 
 # Class to make it more flexible to add plot types. Just need to add
