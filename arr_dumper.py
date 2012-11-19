@@ -85,8 +85,8 @@ class DebugPlotter(object):
 defaultPlotter = DebugPlotter('debug::ImagePlot')
 
 @defaultPlotter.addPlot
-def Image(arr, origin='lower', **kwargs):
-    plt.imshow(arr, origin=origin)
+def Image(arr, origin='lower', interp='None', **kwargs):
+    plt.imshow(arr, origin=origin, interpolation=interp)
 
 @defaultPlotter.addPlot
 def PPI(arr, **kwargs):
