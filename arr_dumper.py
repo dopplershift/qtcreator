@@ -25,7 +25,7 @@ class DebugPlotter(object):
     def __init__(self, typename):
         self._typename = typename
         mod_type = typename.replace('::', '__')
-        globals()['qform__%s' % mod_type] = lambda: self.formats
+        globals()['qform__%s' % mod_type] = self.formats
         self._list = list()
         self._names = list()
 
@@ -34,7 +34,6 @@ class DebugPlotter(object):
         self._names.append(plotter.__name__)
         return plotter
 
-    @property
     def formats(self):
         return ','.join(self._names)
 
