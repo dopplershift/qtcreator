@@ -8,16 +8,23 @@ import matplotlib.pyplot as plt
 
 creator_c_style_dumper = qdump____c_style_array__
 def qdump____c_style_array__(d, value):
-        d.putType(str(value.type.unqualified()))
-        d.putValue('')
-        d.putNumChild(2)
-        if d.isExpanded():
-            with Children(d):
-                with SubItem(d, "Data"):
-                    creator_c_style_dumper(d, value)
-                with SubItem(d, "Image"):
-                    defaultPlotter.putInfo(d, value)
+    typ = value.type.unqualified()
 
+    # Make sure the array points to something we can plot, otherwise we
+    # should just skip the plot code altogether.
+    if typ.target().code not in (ArrayCode, IntCode, FloatCode, ComplexCode):
+        return creator_c_style_dumper(d, value)
+
+    d.putType(str(typ))
+    d.putValue('')
+    d.putNumChild(2)
+    if d.isExpanded():
+        with Children(d):
+            with SubItem(d, "Data"):
+                creator_c_style_dumper(d, value)
+            with SubItem(d, "Image"):
+                d.putAddress(value.address)
+                defaultPlotter.putInfo(d, value)
 
 # Class to make it more flexible to add plot types. Just need to add
 # simple function that takes an array. Name of the function is added
