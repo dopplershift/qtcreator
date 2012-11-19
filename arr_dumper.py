@@ -109,6 +109,7 @@ defaultPlotter = DebugPlotter('debug::ImagePlot')
 @defaultPlotter.addPlot
 def Image(arr, origin='lower', interp='None', **kwargs):
     plt.imshow(arr, origin=origin, interpolation=interp)
+    plt.colorbar()
 
 @defaultPlotter.addPlot
 def PPI(arr, **kwargs):
@@ -118,6 +119,8 @@ def PPI(arr, **kwargs):
     x = rng * np.sin(az)[:, None]
     y = rng * np.cos(az)[:, None]
     plt.pcolormesh(x, y, arr)
+    plt.colorbar()
+    plt.gca().set_aspect('equal', 'datalim')
 
 @defaultPlotter.addPlot
 def Plot(arr, **kwargs):
