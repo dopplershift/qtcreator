@@ -82,6 +82,10 @@ class DebugPlotter(object):
             if dtype is None:
                 dtype = find_dtype
 
+        # We must have failed to get a shape or type
+        if shape is None or dtype is None:
+            return
+
         format = d.currentItemFormat()
         tmp = tempfile.mkstemp(prefix="gdbpy_")
         tmpname = tmp[1].replace("\\", "\\\\")
@@ -152,7 +156,12 @@ def dtypeof(typ):
     '''Maps a GDB type to a Numpy dtype'''
     base_type_map = {gdb.TYPE_CODE_INT:"int", gdb.TYPE_CODE_FLT:"float",
             gdb.TYPE_CODE_COMPLEX:"complex"}
-    base_type = base_type_map[typ.code]
+
+    # Return None if we don't have a corresponding numpy type
+    base_type = base_type_map.get(typ.code, None)
+    if base_type is None:
+        return None
+
     if str(typ.unqualified()).startswith('unsigned'):
         leader = 'u'
     else:
