@@ -18,6 +18,11 @@ def catch_errors(name="Error"):
         return wrapper
     return dec
 
+# Future proof since future versions of creator have renamed this
+try:
+    DisplayImageFile
+except NameError:
+    DisplayImageFile = DisplayImage
 
 creator_c_style_dumper = qdump____c_style_array__
 @catch_errors("array")
