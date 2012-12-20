@@ -95,6 +95,8 @@ class DebugPlotter(object):
         # Read into numpy array in this process
         warn("Numpy Conversion--Shape: %s dtype: %s" % (shape, dtype))
         arr = np.fromfile(tmpname, dtype=dtype).reshape(*shape)
+        if np.iscomplexobj(arr):
+            arr = np.abs(arr)
 
         # Some size parameters for generated images
         dpi = 100
