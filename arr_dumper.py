@@ -13,7 +13,7 @@ def catch_errors(name="Error"):
                 return func(*args, **kwargs)
             except:
                 import sys
-                printException(name, *sys.exc_info())
+                showException(name, *sys.exc_info())
                 return
         return wrapper
     return dec
@@ -62,6 +62,7 @@ class DebugPlotter(object):
     def makePlot(self, fmt, *args, **kwargs):
         return self._list[fmt - 1](*args, **kwargs)
 
+    @catch_errors("array")
     def putInfo(self, d, value):
         d.putValue('')
         d.putType(self._typename)
