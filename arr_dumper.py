@@ -51,10 +51,7 @@ def qdump____c_style_array__(d, value):
                 d.putAddress(value.address)
                 defaultPlotter.putInfo(d, value)
 
-# Class to make it more flexible to add plot types. Just need to add
-# simple function that takes an array. Name of the function is added
-# as an option for display in creator and will be called as appropriate
-class DebugPlotter(object):
+class ArrayFormatter(object):
     def __init__(self, typename):
         self._typename = typename
         mod_type = typename.replace('::', '__')
@@ -62,49 +59,60 @@ class DebugPlotter(object):
         self._list = list()
         self._names = list()
 
-    def addPlot(self, plotter):
-        self._list.append(plotter)
-        self._names.append(plotter.__name__)
-        return plotter
+    def addFormat(self, formatter):
+        self._list.append(formatter)
+        self._names.append(formatter.__name__)
+        return formatter
 
     def formats(self):
         return ','.join(self._names)
 
-    def makePlot(self, fmt, *args, **kwargs):
+    def callFormat(self, fmt, *args, **kwargs):
         return self._list[fmt - 1](*args, **kwargs)
 
     @catch_errors("array")
     def putInfo(self, d, value):
-        d.putValue('')
         d.putType(self._typename)
         d.putNumChild(0)
-        self.plot_memory(d, value)
+        if d.currentItemFormat() is not None:
+            d.putValue(self.make_creator_output(d, value))
+        else:
+            d.putValue('')
 
-    def plot_memory(self, d, value, shape=None, dtype=None, *args, **kwargs):
-        if shape is None or dtype is None:
-            find_shape, find_dtype = numpy_info(value)
-            if shape is None:
-                shape = find_shape
-            if dtype is None:
-                dtype = find_dtype
-
-        # We must have failed to get a shape or type
-        if shape is None or dtype is None:
-            return
-
-        format = d.currentItemFormat()
-        tmp = tempfile.mkstemp(prefix="gdbpy_")
-        tmpname = tmp[1].replace("\\", "\\\\")
-        p = value.address
-
+class DebugWriter(ArrayFormatter):
+    def make_creator_output(self, d, value, *args, **kwargs):
         # Dump memory to file. Necessary because nowhere does python run in
         # the same process (and address space) as actual debugger process.
-        gdb.execute("dump binary memory %s %s %s" %
-            (tmpname, cleanAddress(p), cleanAddress(p + 1)))
+        tmpname = dump_temp_file(value)
 
         # Read into numpy array in this process
-        warn("Numpy Conversion--Shape: %s dtype: %s" % (shape, dtype))
-        arr = np.fromfile(tmpname, dtype=dtype).reshape(*shape)
+        arr = load_numpy_array(tmpname, value)
+        if arr is None:
+            return
+
+        self.callFormat(d.currentItemFormat(), arr, tmpname, *args, **kwargs)
+        return tmpname + '.npy'
+
+fileDumper = DebugWriter('debug::FileDump')
+
+@fileDumper.addFormat
+def Numpy(arr, fname, *args, **kwargs):
+    np.save(fname, arr)
+
+# Class to make it more flexible to add plot types. Just need to add
+# simple function that takes an array. Name of the function is added
+# as an option for display in creator and will be called as appropriate
+class DebugPlotter(ArrayFormatter):
+    def make_creator_output(self, d, value, *args, **kwargs):
+        # Dump memory to file. Necessary because nowhere does python run in
+        # the same process (and address space) as actual debugger process.
+        tmpname = dump_temp_file(value)
+
+        # Read into numpy array in this process
+        arr = load_numpy_array(tmpname, value)
+        if arr is None:
+            return
+
         if np.iscomplexobj(arr):
             arr = np.abs(arr)
 
@@ -115,21 +123,22 @@ class DebugPlotter(object):
         fig = plt.figure(figsize=(inches, inches), dpi=dpi)
 
         # Change plot function based on format
-        self.makePlot(format, arr, *args, **kwargs)
+        self.callFormat(d.currentItemFormat(), arr, *args, **kwargs)
 
         # Always save to temp file. 'raw' makes it compatible for QImage creation.
         plt.savefig(tmpname, format='raw', dpi=dpi)
 
         d.putDisplay(DisplayImageFile, " %d %d 5 %s" % (size, size, tmpname))
+        return ''
 
 defaultPlotter = DebugPlotter('debug::ImagePlot')
 
-@defaultPlotter.addPlot
+@defaultPlotter.addFormat
 def Image(arr, origin='lower', interp='None', **kwargs):
     plt.imshow(arr, origin=origin, interpolation=interp)
     plt.colorbar()
 
-@defaultPlotter.addPlot
+@defaultPlotter.addFormat
 def PPI(arr, **kwargs):
     naz, nrng = arr.shape
     az = np.linspace(0, 2 * np.pi, naz + 1)
@@ -140,7 +149,7 @@ def PPI(arr, **kwargs):
     plt.colorbar()
     plt.gca().set_aspect('equal', 'datalim')
 
-@defaultPlotter.addPlot
+@defaultPlotter.addFormat
 def Plot(arr, **kwargs):
     plt.plot(arr)
 
@@ -173,3 +182,24 @@ def dtypeof(typ):
     else:
         leader = ''
     return np.dtype("%s%s%d" % (leader, base_type, typ.sizeof * 8))
+
+def dump_temp_file(value):
+    tmp = tempfile.mkstemp(prefix="gdbpy_")
+    tmpname = tmp[1].replace("\\", "\\\\")
+    p = value.address
+
+    # Dump memory to file. Necessary because nowhere does python run in
+    # the same process (and address space) as actual debugger process.
+    gdb.execute("dump binary memory %s %s %s" %
+        (tmpname, cleanAddress(p), cleanAddress(p + 1)))
+    return tmpname
+
+def load_numpy_array(tmpname, value):
+    shape, dtype = numpy_info(value)
+
+    # We must have failed to get a shape or type
+    if shape is None or dtype is None:
+        return None
+
+    # Read into numpy array in this process
+    return np.fromfile(tmpname, dtype=dtype).reshape(*shape)
