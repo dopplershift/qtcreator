@@ -47,12 +47,14 @@ def qdump____c_style_array__(d, value):
         with Children(d):
             with SubItem(d, "Data"):
                 creator_c_style_dumper(d, value)
-            with SubItem(d, "Image"):
-                d.putAddress(value.address)
-                defaultPlotter.putInfo(d, value)
             with SubItem(d, "File"):
                 d.putAddress(value.address)
                 fileDumper.putInfo(d, value)
+            # Image must come last, or it breaks the display capabilities
+            # in Creator
+            with SubItem(d, "Image"):
+                d.putAddress(value.address)
+                defaultPlotter.putInfo(d, value)
 
 class ArrayFormatter(object):
     def __init__(self, typename):
