@@ -156,6 +156,11 @@ def PPI(arr, **kwargs):
 def Plot(arr, **kwargs):
     plt.plot(arr)
 
+@defaultPlotter.addFormat
+def Pcolor(arr, **kwargs):
+    plt.pcolormesh(arr)
+    plt.colorbar()
+
 def numpy_info(value):
     '''Determine the type and shape of a numpy array to hold the C array
     represented by the GDB value passed in'''
