@@ -143,7 +143,7 @@ defaultPlotter = DebugPlotter('debug::ImagePlot')
 
 @defaultPlotter.addFormat
 def Image(arr, origin='lower', interp='None', **kwargs):
-    plt.imshow(arr, origin=origin, interpolation=interp)
+    plt.imshow(smart_scale(arr), origin=origin, interpolation=interp)
     plt.colorbar()
 
 @defaultPlotter.addFormat
@@ -153,7 +153,7 @@ def PPI(arr, **kwargs):
     rng = np.arange(nrng + 1)
     x = rng * np.sin(az)[:, None]
     y = rng * np.cos(az)[:, None]
-    plt.pcolormesh(x, y, arr)
+    plt.pcolormesh(x, y, smart_scale(arr))
     plt.colorbar()
     plt.gca().set_aspect('equal', 'datalim')
 
@@ -163,8 +163,16 @@ def Plot(arr, **kwargs):
 
 @defaultPlotter.addFormat
 def Pcolor(arr, **kwargs):
-    plt.pcolormesh(arr)
+    plt.pcolormesh(smart_scale(arr))
     plt.colorbar()
+
+def smart_scale(arr):
+    if np.all(arr >= 0.) and arr.max() - arr.min() > 1e6:
+        newArr = 10.0 * np.log10(arr)
+        newArr[newArr == -np.inf] = 0.
+        return newArr
+    else:
+        return arr
 
 def numpy_info(value):
     '''Determine the type and shape of a numpy array to hold the C array
