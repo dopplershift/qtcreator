@@ -50,6 +50,9 @@ def qdump____c_style_array__(d, value):
             with SubItem(d, "Image"):
                 d.putAddress(value.address)
                 defaultPlotter.putInfo(d, value)
+            with SubItem(d, "File"):
+                d.putAddress(value.address)
+                fileDumper.putInfo(d, value)
 
 class ArrayFormatter(object):
     def __init__(self, typename):
