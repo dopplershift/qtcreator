@@ -24,7 +24,13 @@ try:
 except NameError:
     DisplayImageFile = DisplayImage
 
-creator_c_style_dumper = qdump____c_style_array__
+# Only cache it if we don't have it already. This allows us to easily
+# reload without recursing through previous versions of our own code
+try:
+    creator_c_style_dumper
+except NameError:
+    creator_c_style_dumper = qdump____c_style_array__
+
 @catch_errors("array")
 def qdump____c_style_array__(d, value):
     typ = value.type.unqualified()
