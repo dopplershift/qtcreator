@@ -75,6 +75,9 @@ class ArrayFormatter(object):
     def callFormat(self, fmt, *args, **kwargs):
         return self._list[fmt - 1](*args, **kwargs)
 
+    def formatName(self, fmt):
+        return self._names[fmt - 1]
+
     @catch_errors("array")
     def putInfo(self, d, value):
         d.putType(self._typename)
@@ -134,7 +137,7 @@ class DebugPlotter(ArrayFormatter):
         plt.savefig(tmpname, format='raw', dpi=dpi)
 
         d.putDisplay(DisplayImageFile, " %d %d 5 %s" % (size, size, tmpname))
-        return ''
+        return self.formatName(d.currentItemFormat())
 
 defaultPlotter = DebugPlotter('debug::ImagePlot')
 
