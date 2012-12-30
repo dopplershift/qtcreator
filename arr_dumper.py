@@ -171,6 +171,7 @@ def smart_scale(arr):
     if np.all(arr >= 0.) and arr.max() - arr.min() > 1e6:
         newArr = 10.0 * np.log10(arr)
         newArr[newArr == -np.inf] = 0.
+        newArr[newArr < -100] = -100
         return newArr
     else:
         return arr
