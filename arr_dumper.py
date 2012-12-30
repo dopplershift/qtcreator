@@ -85,6 +85,7 @@ class ArrayFormatter(object):
         if d.currentItemFormat() is not None:
             d.putValue(self.make_creator_output(d, value))
         else:
+            d.putDisplay(StopDisplay)
             d.putValue('')
 
 class DebugWriter(ArrayFormatter):
