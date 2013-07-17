@@ -18,12 +18,6 @@ def catch_errors(name="Error"):
         return wrapper
     return dec
 
-# Future proof since future versions of creator have renamed this
-try:
-    DisplayImageFile
-except NameError:
-    DisplayImageFile = DisplayImage
-
 # Only cache it if we don't have it already. This allows us to easily
 # reload without recursing through previous versions of our own code
 try:
